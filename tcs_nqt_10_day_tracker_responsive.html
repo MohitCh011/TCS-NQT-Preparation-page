@@ -1,0 +1,1245 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TCS NQT – 10‑Day Tracker (Interactive)</title>
+<style>
+  :root{
+    --bg: #0f172a; --bg-2:#0b1220; --card:#0d1526;
+    --muted:#94a3b8; --text:#e5e7eb; --border:#1f2937; --ring:#334155;
+    --accent:#22d3ee; --accent-2:#34d399;
+    --chip:#111827;
+  }
+  *{ box-sizing: border-box; }
+  body{
+    margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, 'Helvetica Neue', Arial;
+    background: linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+    color: var(--text);
+  }
+  header{
+    position: sticky; top:0; z-index:10; backdrop-filter: blur(8px);
+    background: rgba(15, 23, 42, .7); border-bottom:1px solid var(--border);
+  }
+  .wrap{ max-width: 1100px; margin: 0 auto; padding: 16px 20px; }
+  h1{ margin: 6px 0 2px; font-size: clamp(22px, 4vw, 30px); }
+  .sub{ color: var(--muted); font-size: 14px; margin: 4px 0 12px; }
+  .global-progress{
+    border:1px solid var(--border); border-radius: 12px; padding: 10px; background:#0b1324;
+  }
+  .bar{
+    width:100%; height: 12px; background:#0a1020; border-radius: 999px; overflow: hidden;
+    border:1px solid var(--ring);
+  }
+  .fill{
+    height:100%; width:0%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    transition: width .25s ease;
+  }
+  .pct{ font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .legend{ display:flex; flex-wrap: wrap; gap:12px; margin-top:12px; }
+  .chip{ background: var(--chip); color: var(--text); border:1px solid var(--border);
+         padding: 8px 10px; border-radius: 9999px; font-size: 12px; }
+  .grid{ display:grid; gap: 16px; padding: 20px; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+  .card{
+    border:1px solid var(--border); background: linear-gradient(180deg, var(--card), #0b1324);
+    border-radius: 16px; padding: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.25);
+  }
+  .day-head{ display:flex; align-items:center; justify-content: space-between; gap:10px; margin-bottom: 12px; }
+  .day-title{ font-weight: 700; font-size: 18px; }
+  .day-progress{ width:100%; margin: 10px 0 6px; }
+  details{ border:1px dashed var(--ring); border-radius: 12px; padding: 10px; background: rgba(2, 6, 23, .35); }
+  details + details{ margin-top: 10px; }
+  summary{ cursor:pointer; list-style: none; display:flex; align-items:center; justify-content: space-between; }
+  summary::-webkit-details-marker{ display:none; }
+  .badge{ padding: 4px 8px; border-radius: 8px; border:1px solid var(--border); background:#0b1324; color: var(--muted);
+          font-size: 12px; margin-left:10px; }
+  .topic{
+    display: flex; flex-direction: column; background: rgba(17, 24, 39, 0.8);
+    border: 1px solid rgba(51, 65, 85, 0.5); border-radius: 12px; padding: 10px 12px; gap: 8px;
+    transition: all 0.25s ease;
+  }
+  .topic:hover{
+    background: rgba(30, 41, 59, 0.95);
+    box-shadow: 0 0 8px rgba(34, 211, 238, 0.25);
+    transform: translateY(-2px);
+  }
+  .topic:last-child{ border-bottom:none; }
+  input[type="checkbox"]{
+    flex-shrink:0;
+
+    appearance: none; width: 18px; height: 18px; border-radius: 4px; border:2px solid var(--ring);
+    display:inline-grid; place-content:center; background:#0a1020;
+  }
+  input[type="checkbox"]::before{
+    content:""; width: 10px; height: 10px; transform: scale(0); transition: .12s transform ease-in-out;
+    clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0, 43% 62%);
+    background: linear-gradient(45deg, var(--accent), var(--accent-2)); border-radius: 2px;
+  }
+  input[type="checkbox"]:checked{ border-color: var(--accent); }
+  input[type="checkbox"]:checked::before{ transform: scale(1); }
+  .topic-label{ display:flex; flex-direction: column; gap:8px; }
+  .name{ font-size: 14px; line-height: 1.35; }
+  .source{
+    flex: 0 1 55%;
+    max-width: 420px;
+    height: 32px;
+    background:#0b1324;
+    color: var(--text);
+    border:1px solid var(--ring);
+    border-radius: 8px;
+    padding: 6px 8px;
+    font-size: 12px;
+    outline: none;
+  }
+  .print-tip{ color: var(--muted); font-size: 12px; text-align:center; }
+  footer{ border-top:1px solid var(--border); padding: 16px 20px; color: var(--muted); font-size: 12px; text-align:center; }
+
+  @media (max-width: 768px) {
+    body {
+      padding: 0;
+    }
+    .wrap {
+      padding: 10px;
+    }
+    .grid {
+      grid-template-columns: 1fr;
+      padding: 10px 0;
+      gap: 20px;
+    }
+    .card {
+      padding: 14px;
+      border-radius: 14px;
+    }
+    .day-head {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+    }
+    .day-title {
+      font-size: 16px;
+    }
+    .source {
+      width: 100%;
+      max-width: 100%;
+      height: 30px;
+      font-size: 12px;
+    }
+    summary {
+      font-size: 15px;
+    }
+    .badge {
+      font-size: 11px;
+      padding: 2px 6px;
+    }
+    .topic {
+      gap: 6px;
+      padding: 8px;
+    }
+  }
+</style>
+
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>TCS NQT – 10‑Day Study Tracker</h1>
+    <p class="sub">Interactive checklist with auto‑save and progress bars (per‑day + overall).</p>
+    <div class="global-progress">
+      <div class="bar"><div class="fill" id="overall-fill"></div></div>
+      <div class="pct" id="overall-pct">Overall Progress – 0%</div>
+    </div>
+    <div class="legend">
+      <span class="chip">✔ Tick = Completed</span>
+      <span class="chip">✍ Add your source for each topic</span>
+      <span class="chip">💾 Auto-saves in your browser</span>
+      <span class="chip">⤵ Print → Save as PDF</span>
+    </div>
+  </div>
+</header>
+<main class="wrap">
+  <div class="grid">
+<section class="card" data-day="Day 1">
+  <div class="day-head">
+    <div class="day-title">Day 1</div>
+    <div class="badge">12 topics</div>
+  </div>
+  <div class="day-progress">
+    <div class="bar"><div class="fill" id="day1-fill"></div></div>
+    <div class="pct" id="day1-pct">Day 1 – 0% Complete</div>
+  </div>
+  <details open>
+    <summary>Reasoning <span class="badge">4 topics</span></summary>
+    <div class="topic">
+      <input type="checkbox" id="day1_reasoning_1" data-day="Day 1">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Logical Deduction / Deductive Reasoning</span>
+        <input class="source" type="text" data-key="day1_reasoning_1_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day1_reasoning_2" data-day="Day 1">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Blood Relation</span>
+        <input class="source" type="text" data-key="day1_reasoning_2_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day1_reasoning_3" data-day="Day 1">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Letter & Number Series</span>
+        <input class="source" type="text" data-key="day1_reasoning_3_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day1_reasoning_4" data-day="Day 1">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Coding–Decoding</span>
+        <input class="source" type="text" data-key="day1_reasoning_4_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+  </details>
+  <details open>
+    <summary>Coding <span class="badge">2 topics</span></summary>
+    <div class="topic">
+      <input type="checkbox" id="day1_coding_1" data-day="Day 1">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Basics of Programming</span>
+        <input class="source" type="text" data-key="day1_coding_1_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day1_coding_2" data-day="Day 1">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Data Types</span>
+        <input class="source" type="text" data-key="day1_coding_2_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+  </details>
+  <details open>
+    <summary>Numerical <span class="badge">4 topics</span></summary>
+    <div class="topic">
+      <input type="checkbox" id="day1_numerical_1" data-day="Day 1">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Number System Basics</span>
+        <input class="source" type="text" data-key="day1_numerical_1_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day1_numerical_2" data-day="Day 1">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">HCF & LCM</span>
+        <input class="source" type="text" data-key="day1_numerical_2_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day1_numerical_3" data-day="Day 1">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Divisibility</span>
+        <input class="source" type="text" data-key="day1_numerical_3_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day1_numerical_4" data-day="Day 1">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Numbers & Decimal Fractions</span>
+        <input class="source" type="text" data-key="day1_numerical_4_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+  </details>
+  <details open>
+    <summary>Verbal <span class="badge">2 topics</span></summary>
+    <div class="topic">
+      <input type="checkbox" id="day1_verbal_1" data-day="Day 1">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Reading Comprehension</span>
+        <input class="source" type="text" data-key="day1_verbal_1_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day1_verbal_2" data-day="Day 1">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Cloze Test</span>
+        <input class="source" type="text" data-key="day1_verbal_2_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+  </details>
+</section>
+<section class="card" data-day="Day 2">
+  <div class="day-head">
+    <div class="day-title">Day 2</div>
+    <div class="badge">12 topics</div>
+  </div>
+  <div class="day-progress">
+    <div class="bar"><div class="fill" id="day2-fill"></div></div>
+    <div class="pct" id="day2-pct">Day 2 – 0% Complete</div>
+  </div>
+  <details open>
+    <summary>Reasoning <span class="badge">4 topics</span></summary>
+    <div class="topic">
+      <input type="checkbox" id="day2_reasoning_1" data-day="Day 2">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Syllogism</span>
+        <input class="source" type="text" data-key="day2_reasoning_1_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day2_reasoning_2" data-day="Day 2">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Data Sufficiency</span>
+        <input class="source" type="text" data-key="day2_reasoning_2_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day2_reasoning_3" data-day="Day 2">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Pattern Recognition</span>
+        <input class="source" type="text" data-key="day2_reasoning_3_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day2_reasoning_4" data-day="Day 2">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Attention to Detail</span>
+        <input class="source" type="text" data-key="day2_reasoning_4_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+  </details>
+  <details open>
+    <summary>Coding <span class="badge">2 topics</span></summary>
+    <div class="topic">
+      <input type="checkbox" id="day2_coding_1" data-day="Day 2">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Operators</span>
+        <input class="source" type="text" data-key="day2_coding_1_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day2_coding_2" data-day="Day 2">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Conditionals</span>
+        <input class="source" type="text" data-key="day2_coding_2_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+  </details>
+  <details open>
+    <summary>Numerical <span class="badge">4 topics</span></summary>
+    <div class="topic">
+      <input type="checkbox" id="day2_numerical_1" data-day="Day 2">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Percentages</span>
+        <input class="source" type="text" data-key="day2_numerical_1_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day2_numerical_2" data-day="Day 2">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Profit & Loss</span>
+        <input class="source" type="text" data-key="day2_numerical_2_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day2_numerical_3" data-day="Day 2">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Averages</span>
+        <input class="source" type="text" data-key="day2_numerical_3_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day2_numerical_4" data-day="Day 2">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Ages</span>
+        <input class="source" type="text" data-key="day2_numerical_4_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+  </details>
+  <details open>
+    <summary>Verbal <span class="badge">2 topics</span></summary>
+    <div class="topic">
+      <input type="checkbox" id="day2_verbal_1" data-day="Day 2">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Error Spotting</span>
+        <input class="source" type="text" data-key="day2_verbal_1_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day2_verbal_2" data-day="Day 2">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Sentence Completion</span>
+        <input class="source" type="text" data-key="day2_verbal_2_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+  </details>
+</section>
+<section class="card" data-day="Day 3">
+  <div class="day-head">
+    <div class="day-title">Day 3</div>
+    <div class="badge">12 topics</div>
+  </div>
+  <div class="day-progress">
+    <div class="bar"><div class="fill" id="day3-fill"></div></div>
+    <div class="pct" id="day3-pct">Day 3 – 0% Complete</div>
+  </div>
+  <details open>
+    <summary>Reasoning <span class="badge">4 topics</span></summary>
+    <div class="topic">
+      <input type="checkbox" id="day3_reasoning_1" data-day="Day 3">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Decision Making</span>
+        <input class="source" type="text" data-key="day3_reasoning_1_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day3_reasoning_2" data-day="Day 3">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Directions</span>
+        <input class="source" type="text" data-key="day3_reasoning_2_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day3_reasoning_3" data-day="Day 3">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Visual/Spatial Reasoning</span>
+        <input class="source" type="text" data-key="day3_reasoning_3_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day3_reasoning_4" data-day="Day 3">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Venn Diagrams</span>
+        <input class="source" type="text" data-key="day3_reasoning_4_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+  </details>
+  <details open>
+    <summary>Coding <span class="badge">2 topics</span></summary>
+    <div class="topic">
+      <input type="checkbox" id="day3_coding_1" data-day="Day 3">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Loops</span>
+        <input class="source" type="text" data-key="day3_coding_1_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day3_coding_2" data-day="Day 3">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Arrays</span>
+        <input class="source" type="text" data-key="day3_coding_2_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+  </details>
+  <details open>
+    <summary>Numerical <span class="badge">4 topics</span></summary>
+    <div class="topic">
+      <input type="checkbox" id="day3_numerical_1" data-day="Day 3">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Simple/Compound Interest</span>
+        <input class="source" type="text" data-key="day3_numerical_1_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day3_numerical_2" data-day="Day 3">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Ratios & Proportion</span>
+        <input class="source" type="text" data-key="day3_numerical_2_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day3_numerical_3" data-day="Day 3">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Speed-Time-Distance</span>
+        <input class="source" type="text" data-key="day3_numerical_3_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day3_numerical_4" data-day="Day 3">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Work & Time</span>
+        <input class="source" type="text" data-key="day3_numerical_4_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+  </details>
+  <details open>
+    <summary>Verbal <span class="badge">2 topics</span></summary>
+    <div class="topic">
+      <input type="checkbox" id="day3_verbal_1" data-day="Day 3">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Synonym & Antonym</span>
+        <input class="source" type="text" data-key="day3_verbal_1_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day3_verbal_2" data-day="Day 3">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Vocabulary</span>
+        <input class="source" type="text" data-key="day3_verbal_2_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+  </details>
+</section>
+<section class="card" data-day="Day 4">
+  <div class="day-head">
+    <div class="day-title">Day 4</div>
+    <div class="badge">12 topics</div>
+  </div>
+  <div class="day-progress">
+    <div class="bar"><div class="fill" id="day4-fill"></div></div>
+    <div class="pct" id="day4-pct">Day 4 – 0% Complete</div>
+  </div>
+  <details open>
+    <summary>Reasoning <span class="badge">4 topics</span></summary>
+    <div class="topic">
+      <input type="checkbox" id="day4_reasoning_1" data-day="Day 4">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Data Interpretation</span>
+        <input class="source" type="text" data-key="day4_reasoning_1_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day4_reasoning_2" data-day="Day 4">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Seating Arrangement</span>
+        <input class="source" type="text" data-key="day4_reasoning_2_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day4_reasoning_3" data-day="Day 4">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Calendar</span>
+        <input class="source" type="text" data-key="day4_reasoning_3_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day4_reasoning_4" data-day="Day 4">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Clock</span>
+        <input class="source" type="text" data-key="day4_reasoning_4_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+  </details>
+  <details open>
+    <summary>Coding <span class="badge">2 topics</span></summary>
+    <div class="topic">
+      <input type="checkbox" id="day4_coding_1" data-day="Day 4">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Strings</span>
+        <input class="source" type="text" data-key="day4_coding_1_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day4_coding_2" data-day="Day 4">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Functions</span>
+        <input class="source" type="text" data-key="day4_coding_2_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+  </details>
+  <details open>
+    <summary>Numerical <span class="badge">4 topics</span></summary>
+    <div class="topic">
+      <input type="checkbox" id="day4_numerical_1" data-day="Day 4">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Simplification & Approximation</span>
+        <input class="source" type="text" data-key="day4_numerical_1_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day4_numerical_2" data-day="Day 4">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Series</span>
+        <input class="source" type="text" data-key="day4_numerical_2_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day4_numerical_3" data-day="Day 4">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Allegations & Mixtures</span>
+        <input class="source" type="text" data-key="day4_numerical_3_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day4_numerical_4" data-day="Day 4">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Permutations & Combinations</span>
+        <input class="source" type="text" data-key="day4_numerical_4_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+  </details>
+  <details open>
+    <summary>Verbal <span class="badge">2 topics</span></summary>
+    <div class="topic">
+      <input type="checkbox" id="day4_verbal_1" data-day="Day 4">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Sentence Re-arrangement (Para Jumble)</span>
+        <input class="source" type="text" data-key="day4_verbal_1_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day4_verbal_2" data-day="Day 4">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">English Grammar</span>
+        <input class="source" type="text" data-key="day4_verbal_2_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+  </details>
+</section>
+<section class="card" data-day="Day 5">
+  <div class="day-head">
+    <div class="day-title">Day 5</div>
+    <div class="badge">12 topics</div>
+  </div>
+  <div class="day-progress">
+    <div class="bar"><div class="fill" id="day5-fill"></div></div>
+    <div class="pct" id="day5-pct">Day 5 – 0% Complete</div>
+  </div>
+  <details open>
+    <summary>Reasoning <span class="badge">4 topics</span></summary>
+    <div class="topic">
+      <input type="checkbox" id="day5_reasoning_1" data-day="Day 5">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Cuts & Unfolds</span>
+        <input class="source" type="text" data-key="day5_reasoning_1_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day5_reasoning_2" data-day="Day 5">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Cube/Dice</span>
+        <input class="source" type="text" data-key="day5_reasoning_2_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day5_reasoning_3" data-day="Day 5">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Visual Reasoning</span>
+        <input class="source" type="text" data-key="day5_reasoning_3_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day5_reasoning_4" data-day="Day 5">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Pattern Analysis (Advanced)</span>
+        <input class="source" type="text" data-key="day5_reasoning_4_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+  </details>
+  <details open>
+    <summary>Coding <span class="badge">2 topics</span></summary>
+    <div class="topic">
+      <input type="checkbox" id="day5_coding_1" data-day="Day 5">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Decision Making Programs</span>
+        <input class="source" type="text" data-key="day5_coding_1_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day5_coding_2" data-day="Day 5">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Scenario-Based Questions</span>
+        <input class="source" type="text" data-key="day5_coding_2_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+  </details>
+  <details open>
+    <summary>Numerical <span class="badge">4 topics</span></summary>
+    <div class="topic">
+      <input type="checkbox" id="day5_numerical_1" data-day="Day 5">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Geometry</span>
+        <input class="source" type="text" data-key="day5_numerical_1_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day5_numerical_2" data-day="Day 5">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Area & Perimeter</span>
+        <input class="source" type="text" data-key="day5_numerical_2_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day5_numerical_3" data-day="Day 5">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Mensuration</span>
+        <input class="source" type="text" data-key="day5_numerical_3_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day5_numerical_4" data-day="Day 5">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Mean-Median-Mode</span>
+        <input class="source" type="text" data-key="day5_numerical_4_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+  </details>
+  <details open>
+    <summary>Verbal <span class="badge">2 topics</span></summary>
+    <div class="topic">
+      <input type="checkbox" id="day5_verbal_1" data-day="Day 5">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Tense</span>
+        <input class="source" type="text" data-key="day5_verbal_1_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day5_verbal_2" data-day="Day 5">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Article</span>
+        <input class="source" type="text" data-key="day5_verbal_2_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+  </details>
+</section>
+<section class="card" data-day="Day 6">
+  <div class="day-head">
+    <div class="day-title">Day 6</div>
+    <div class="badge">12 topics</div>
+  </div>
+  <div class="day-progress">
+    <div class="bar"><div class="fill" id="day6-fill"></div></div>
+    <div class="pct" id="day6-pct">Day 6 – 0% Complete</div>
+  </div>
+  <details open>
+    <summary>Reasoning <span class="badge">4 topics</span></summary>
+    <div class="topic">
+      <input type="checkbox" id="day6_reasoning_1" data-day="Day 6">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Statements & Assumptions</span>
+        <input class="source" type="text" data-key="day6_reasoning_1_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day6_reasoning_2" data-day="Day 6">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Statements & Conclusions</span>
+        <input class="source" type="text" data-key="day6_reasoning_2_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day6_reasoning_3" data-day="Day 6">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Course of Actions</span>
+        <input class="source" type="text" data-key="day6_reasoning_3_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day6_reasoning_4" data-day="Day 6">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Arguments</span>
+        <input class="source" type="text" data-key="day6_reasoning_4_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+  </details>
+  <details open>
+    <summary>Coding <span class="badge">2 topics</span></summary>
+    <div class="topic">
+      <input type="checkbox" id="day6_coding_1" data-day="Day 6">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Number Series Printing</span>
+        <input class="source" type="text" data-key="day6_coding_1_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day6_coding_2" data-day="Day 6">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Matrix</span>
+        <input class="source" type="text" data-key="day6_coding_2_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+  </details>
+  <details open>
+    <summary>Numerical <span class="badge">4 topics</span></summary>
+    <div class="topic">
+      <input type="checkbox" id="day6_numerical_1" data-day="Day 6">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Tabular DI</span>
+        <input class="source" type="text" data-key="day6_numerical_1_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day6_numerical_2" data-day="Day 6">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Graphical DI</span>
+        <input class="source" type="text" data-key="day6_numerical_2_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day6_numerical_3" data-day="Day 6">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Pie Chart DI</span>
+        <input class="source" type="text" data-key="day6_numerical_3_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day6_numerical_4" data-day="Day 6">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Standard Deviation & Variance</span>
+        <input class="source" type="text" data-key="day6_numerical_4_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+  </details>
+  <details open>
+    <summary>Verbal <span class="badge">2 topics</span></summary>
+    <div class="topic">
+      <input type="checkbox" id="day6_verbal_1" data-day="Day 6">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Conjunction</span>
+        <input class="source" type="text" data-key="day6_verbal_1_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day6_verbal_2" data-day="Day 6">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Formal / Informal Language</span>
+        <input class="source" type="text" data-key="day6_verbal_2_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+  </details>
+</section>
+<section class="card" data-day="Day 7">
+  <div class="day-head">
+    <div class="day-title">Day 7</div>
+    <div class="badge">12 topics</div>
+  </div>
+  <div class="day-progress">
+    <div class="bar"><div class="fill" id="day7-fill"></div></div>
+    <div class="pct" id="day7-pct">Day 7 – 0% Complete</div>
+  </div>
+  <details open>
+    <summary>Reasoning <span class="badge">4 topics</span></summary>
+    <div class="topic">
+      <input type="checkbox" id="day7_reasoning_1" data-day="Day 7">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Data Arrangement</span>
+        <input class="source" type="text" data-key="day7_reasoning_1_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day7_reasoning_2" data-day="Day 7">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Logical Puzzles</span>
+        <input class="source" type="text" data-key="day7_reasoning_2_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day7_reasoning_3" data-day="Day 7">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Attention to Detail (Adv)</span>
+        <input class="source" type="text" data-key="day7_reasoning_3_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day7_reasoning_4" data-day="Day 7">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Analytical Reasoning</span>
+        <input class="source" type="text" data-key="day7_reasoning_4_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+  </details>
+  <details open>
+    <summary>Coding <span class="badge">2 topics</span></summary>
+    <div class="topic">
+      <input type="checkbox" id="day7_coding_1" data-day="Day 7">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Pythagoras Triplets</span>
+        <input class="source" type="text" data-key="day7_coding_1_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day7_coding_2" data-day="Day 7">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">LCM of 3 Numbers</span>
+        <input class="source" type="text" data-key="day7_coding_2_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+  </details>
+  <details open>
+    <summary>Numerical <span class="badge">4 topics</span></summary>
+    <div class="topic">
+      <input type="checkbox" id="day7_numerical_1" data-day="Day 7">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Probability</span>
+        <input class="source" type="text" data-key="day7_numerical_1_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day7_numerical_2" data-day="Day 7">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Equations</span>
+        <input class="source" type="text" data-key="day7_numerical_2_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day7_numerical_3" data-day="Day 7">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Simplifications Rev</span>
+        <input class="source" type="text" data-key="day7_numerical_3_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day7_numerical_4" data-day="Day 7">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Ratios & Proportions Rev</span>
+        <input class="source" type="text" data-key="day7_numerical_4_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+  </details>
+  <details open>
+    <summary>Verbal <span class="badge">2 topics</span></summary>
+    <div class="topic">
+      <input type="checkbox" id="day7_verbal_1" data-day="Day 7">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Sentence Correction</span>
+        <input class="source" type="text" data-key="day7_verbal_1_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day7_verbal_2" data-day="Day 7">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Subject-Verb Agreement</span>
+        <input class="source" type="text" data-key="day7_verbal_2_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+  </details>
+</section>
+<section class="card" data-day="Day 8">
+  <div class="day-head">
+    <div class="day-title">Day 8</div>
+    <div class="badge">12 topics</div>
+  </div>
+  <div class="day-progress">
+    <div class="bar"><div class="fill" id="day8-fill"></div></div>
+    <div class="pct" id="day8-pct">Day 8 – 0% Complete</div>
+  </div>
+  <details open>
+    <summary>Reasoning <span class="badge">4 topics</span></summary>
+    <div class="topic">
+      <input type="checkbox" id="day8_reasoning_1" data-day="Day 8">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Mixed Reasoning Set</span>
+        <input class="source" type="text" data-key="day8_reasoning_1_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day8_reasoning_2" data-day="Day 8">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Syllogism Rev</span>
+        <input class="source" type="text" data-key="day8_reasoning_2_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day8_reasoning_3" data-day="Day 8">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Data Sufficiency Rev</span>
+        <input class="source" type="text" data-key="day8_reasoning_3_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day8_reasoning_4" data-day="Day 8">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Logical Sequence</span>
+        <input class="source" type="text" data-key="day8_reasoning_4_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+  </details>
+  <details open>
+    <summary>Coding <span class="badge">2 topics</span></summary>
+    <div class="topic">
+      <input type="checkbox" id="day8_coding_1" data-day="Day 8">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Arrays & Strings Practice</span>
+        <input class="source" type="text" data-key="day8_coding_1_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day8_coding_2" data-day="Day 8">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Loops + Conditionals Problems</span>
+        <input class="source" type="text" data-key="day8_coding_2_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+  </details>
+  <details open>
+    <summary>Numerical <span class="badge">4 topics</span></summary>
+    <div class="topic">
+      <input type="checkbox" id="day8_numerical_1" data-day="Day 8">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Work-Time Rev</span>
+        <input class="source" type="text" data-key="day8_numerical_1_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day8_numerical_2" data-day="Day 8">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Speed-Distance Rev</span>
+        <input class="source" type="text" data-key="day8_numerical_2_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day8_numerical_3" data-day="Day 8">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Mixtures Rev</span>
+        <input class="source" type="text" data-key="day8_numerical_3_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day8_numerical_4" data-day="Day 8">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Percentages & P/L Rev</span>
+        <input class="source" type="text" data-key="day8_numerical_4_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+  </details>
+  <details open>
+    <summary>Verbal <span class="badge">2 topics</span></summary>
+    <div class="topic">
+      <input type="checkbox" id="day8_verbal_1" data-day="Day 8">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Preposition</span>
+        <input class="source" type="text" data-key="day8_verbal_1_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day8_verbal_2" data-day="Day 8">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Noun</span>
+        <input class="source" type="text" data-key="day8_verbal_2_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+  </details>
+</section>
+<section class="card" data-day="Day 9">
+  <div class="day-head">
+    <div class="day-title">Day 9</div>
+    <div class="badge">12 topics</div>
+  </div>
+  <div class="day-progress">
+    <div class="bar"><div class="fill" id="day9-fill"></div></div>
+    <div class="pct" id="day9-pct">Day 9 – 0% Complete</div>
+  </div>
+  <details open>
+    <summary>Reasoning <span class="badge">4 topics</span></summary>
+    <div class="topic">
+      <input type="checkbox" id="day9_reasoning_1" data-day="Day 9">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Full-Length Logical Sets</span>
+        <input class="source" type="text" data-key="day9_reasoning_1_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day9_reasoning_2" data-day="Day 9">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Visual + Analytical</span>
+        <input class="source" type="text" data-key="day9_reasoning_2_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day9_reasoning_3" data-day="Day 9">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Seating & Direction</span>
+        <input class="source" type="text" data-key="day9_reasoning_3_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day9_reasoning_4" data-day="Day 9">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Statements Practice</span>
+        <input class="source" type="text" data-key="day9_reasoning_4_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+  </details>
+  <details open>
+    <summary>Coding <span class="badge">2 topics</span></summary>
+    <div class="topic">
+      <input type="checkbox" id="day9_coding_1" data-day="Day 9">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Mini Coding Test</span>
+        <input class="source" type="text" data-key="day9_coding_1_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day9_coding_2" data-day="Day 9">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Debugging Practice</span>
+        <input class="source" type="text" data-key="day9_coding_2_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+  </details>
+  <details open>
+    <summary>Numerical <span class="badge">4 topics</span></summary>
+    <div class="topic">
+      <input type="checkbox" id="day9_numerical_1" data-day="Day 9">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">DI Full Practice</span>
+        <input class="source" type="text" data-key="day9_numerical_1_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day9_numerical_2" data-day="Day 9">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Series Practice</span>
+        <input class="source" type="text" data-key="day9_numerical_2_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day9_numerical_3" data-day="Day 9">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Geometry Practice</span>
+        <input class="source" type="text" data-key="day9_numerical_3_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day9_numerical_4" data-day="Day 9">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Arithmetic Mix Practice</span>
+        <input class="source" type="text" data-key="day9_numerical_4_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+  </details>
+  <details open>
+    <summary>Verbal <span class="badge">2 topics</span></summary>
+    <div class="topic">
+      <input type="checkbox" id="day9_verbal_1" data-day="Day 9">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Modals</span>
+        <input class="source" type="text" data-key="day9_verbal_1_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day9_verbal_2" data-day="Day 9">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Spellings</span>
+        <input class="source" type="text" data-key="day9_verbal_2_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+  </details>
+</section>
+<section class="card" data-day="Day 10">
+  <div class="day-head">
+    <div class="day-title">Day 10</div>
+    <div class="badge">5 topics</div>
+  </div>
+  <div class="day-progress">
+    <div class="bar"><div class="fill" id="day10-fill"></div></div>
+    <div class="pct" id="day10-pct">Day 10 – 0% Complete</div>
+  </div>
+  <details open>
+    <summary>Reasoning <span class="badge">1 topics</span></summary>
+    <div class="topic">
+      <input type="checkbox" id="day10_reasoning_1" data-day="Day 10">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Full Revision + 25 Questions Mixed Practice</span>
+        <input class="source" type="text" data-key="day10_reasoning_1_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+  </details>
+  <details open>
+    <summary>Coding <span class="badge">1 topics</span></summary>
+    <div class="topic">
+      <input type="checkbox" id="day10_coding_1" data-day="Day 10">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">2 Full Coding Questions (Intermediate to Advanced)</span>
+        <input class="source" type="text" data-key="day10_coding_1_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+  </details>
+  <details open>
+    <summary>Numerical <span class="badge">2 topics</span></summary>
+    <div class="topic">
+      <input type="checkbox" id="day10_numerical_1" data-day="Day 10">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Quant Mock Test (30–35 Qs)</span>
+        <input class="source" type="text" data-key="day10_numerical_1_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+    <div class="topic">
+      <input type="checkbox" id="day10_numerical_2" data-day="Day 10">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Time Management Practice</span>
+        <input class="source" type="text" data-key="day10_numerical_2_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+  </details>
+  <details open>
+    <summary>Verbal <span class="badge">1 topics</span></summary>
+    <div class="topic">
+      <input type="checkbox" id="day10_verbal_1" data-day="Day 10">
+      <label class="topic-label" for="{safe_id}">
+        <span class="name">Sentence Building</span>
+        <input class="source" type="text" data-key="day10_verbal_1_topic" placeholder="Source / Where I learnt (e.g., PrepInsta, YouTube, Notes)">
+      </label>
+    </div>
+  </details>
+</section>
+  </div>
+  <p class="print-tip">Tip: Use <strong>Print</strong> → <em>Save as PDF</em> to export your current checklist state.</p>
+</main>
+<footer>
+  Built with ❤️ (HTML, CSS, JS with localStorage). Your data stays in your browser.
+</footer>
+<script>
+// === Persistence & Progress ===
+function saveCheckboxState(id, checked){
+  localStorage.setItem(id, checked ? "true" : "false");
+}
+function restoreCheckboxState(id){
+  return localStorage.getItem(id) === "true";
+}
+function saveInputValue(key, value){
+  localStorage.setItem(key, value);
+}
+function restoreInputValue(key){
+  return localStorage.getItem(key) || "";
+}
+
+function updateDayProgress(daySection){
+  const day = daySection.getAttribute("data-day");
+  const checks = daySection.querySelectorAll('input[type="checkbox"]');
+  const done = Array.from(checks).filter(c => c.checked).length;
+  const total = checks.length || 1;
+  const pct = Math.round((done/total)*100);
+  const fill = daySection.querySelector(`#${day.replace(" ", "").toLowerCase()}-fill`);
+  const label = daySection.querySelector(`#${day.replace(" ", "").toLowerCase()}-pct`);
+  if(fill){ fill.style.width = pct + '%'; }
+  if(label){ label.textContent = `${day} – ${pct}% Complete`; }
+}
+
+function updateOverallProgress(){
+  const allChecks = document.querySelectorAll('input[type="checkbox"]');
+  const done = Array.from(allChecks).filter(c => c.checked).length;
+  const total = allChecks.length || 1;
+  const pct = Math.round((done/total)*100);
+  const fill = document.getElementById('overall-fill');
+  const label = document.getElementById('overall-pct');
+  if(fill){ fill.style.width = pct + '%'; }
+  if(label){ label.textContent = `Overall Progress – ${pct}%`; }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  // Restore checkboxes and inputs
+  document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+    // restore
+    const stored = restoreCheckboxState(cb.id);
+    if(stored){ cb.checked = true; }
+    // update progress on change
+    cb.addEventListener('change', () => {
+      saveCheckboxState(cb.id, cb.checked);
+      const card = cb.closest('section.card');
+      if(card){ updateDayProgress(card); }
+      updateOverallProgress();
+    });
+  });
+
+  document.querySelectorAll('input.source[data-key]').forEach(inp => {
+    const key = inp.getAttribute('data-key');
+    inp.value = restoreInputValue(key);
+    inp.addEventListener('input', () => saveInputValue(key, inp.value));
+  });
+
+  // Initial progress paint
+  document.querySelectorAll('section.card').forEach(updateDayProgress);
+  updateOverallProgress();
+});
+</script>
+</body>
+</html>
