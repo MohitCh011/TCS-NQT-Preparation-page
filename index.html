@@ -51,6 +51,7 @@
   .day-progress{ width:100%; margin: 10px 0 6px; }
   details{ border:1px dashed var(--ring); border-radius: 12px; padding: 10px; background: rgba(2, 6, 23, .35); }
   details + details{ margin-top: 10px; }
+  .wrap{ padding: 8px 12px; }
   summary{ cursor:pointer; list-style: none; display:flex; align-items:center; justify-content: space-between; }
   summary::-webkit-details-marker{ display:none; }
   .badge{ padding: 4px 8px; border-radius: 8px; border:1px solid var(--border); background:#0b1324; color: var(--muted);
@@ -108,6 +109,7 @@
       padding: 10px 0;
       gap: 20px;
     }
+    
     .card {
       padding: 14px;
       border-radius: 14px;
@@ -150,14 +152,9 @@
       <div class="bar"><div class="fill" id="overall-fill"></div></div>
       <div class="pct" id="overall-pct">Overall Progress – 0%</div>
     </div>
-    <div class="legend">
-      <span class="chip">✔ Tick = Completed</span>
-      <span class="chip">✍ Add your source for each topic</span>
-      <span class="chip">💾 Auto-saves in your browser</span>
-      <span class="chip">⤵ Print → Save as PDF</span>
-    </div>
   </div>
 </header>
+
 <main class="wrap">
   <div class="grid">
 <section class="card" data-day="Day 1">
@@ -1172,10 +1169,10 @@
   </details>
 </section>
   </div>
-  <p class="print-tip">Tip: Use <strong>Print</strong> → <em>Save as PDF</em> to export your current checklist state.</p>
+  
 </main>
 <footer>
-  Built with ❤️ (HTML, CSS, JS with localStorage). Your data stays in your browser.
+  
 </footer>
 <script>
 // === Persistence & Progress ===
