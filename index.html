@@ -1238,5 +1238,37 @@ document.addEventListener("DOMContentLoaded", () => {
   updateOverallProgress();
 });
 </script>
+
+<script>
+// 🔗 YouTube link detection for Source fields
+document.querySelectorAll('input[type="text"]').forEach(input => {
+  if (input.placeholder && input.placeholder.toLowerCase().includes('source')) {
+    const linkBtn = document.createElement('button');
+    linkBtn.textContent = '🔗';
+    linkBtn.style.marginLeft = '6px';
+    linkBtn.style.cursor = 'pointer';
+    linkBtn.style.display = 'none';
+    linkBtn.style.background = 'none';
+    linkBtn.style.border = 'none';
+    linkBtn.style.fontSize = '16px';
+    linkBtn.title = 'Open YouTube link';
+    input.insertAdjacentElement('afterend', linkBtn);
+
+    const checkLink = () => {
+      const val = input.value.trim();
+      if (val.startsWith('https://www.youtube.com/') || val.startsWith('https://youtu.be/')) {
+        linkBtn.style.display = 'inline';
+        linkBtn.onclick = () => window.open(val, '_blank');
+      } else {
+        linkBtn.style.display = 'none';
+      }
+    };
+
+    input.addEventListener('input', checkLink);
+    checkLink();
+  }
+});
+</script>
 </body>
+
 </html>
